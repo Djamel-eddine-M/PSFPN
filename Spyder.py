@@ -10,6 +10,7 @@ import secrets
 import math
 import hashlib
 import random
+import time
 
 
 class EllipticCurve(object):
@@ -108,8 +109,7 @@ class Point(object):
     def __mul__(self, n):
         
         """ Multiplication of a point by a integer
-        her its the simple multiplication without any optimisation
-        
+           
         """
         assert isinstance(n, int)
         assert n > 0
@@ -152,6 +152,9 @@ class Inf(Point):
     def __add__(self, Q):
         """P + 0 = P"""
         return Q
+    
+    def __str__(self):
+        return 'Inf'
 
 def mod_inverse(a, n):
     """Return the inverse of a mod n.
@@ -282,7 +285,7 @@ def random_point(a,b,p):
             print('  Error !!!  ')
     yu=i
     u=Point(EllipticCurve(a,b,p),xu,yu)   
-    P=u.__mul__(h)
+    P=u*h
     return seed,yu,P  
 
 def verify_point(a,b,p,seed,yu,P,ordreP):
@@ -309,8 +312,8 @@ def verify_point(a,b,p,seed,yu,P,ordreP):
     if(((yu**2) % p) != temp):
         return False
     u=Point(EllipticCurve(a,b,p),xu,yu) 
-    Pprime=u.__mul__(h)
-    if((P!=Pprime) or( not isinstance(P.__mul__(ordreP),Inf))):
+    Pprime=u*h
+    if((P!=Pprime) or( not isinstance(P*ordreP,Inf))):
         return False
     return True
 
@@ -349,26 +352,107 @@ def order(P,p):
     else :
         i=2
     while(True):
-        h=P.__mul__(i)
+        h=P*i
         if(isinstance(h,Inf)):
             return i
         i=i+1
         
 
+    
+    
+def rho_probability(P,A,B,Q,p):
+    prob=random.randint(1,9999)%3
+    if(prob %3 == 0):
+        A=2*A % p
+        B=2*B % p
+        if(A==0):
+            A=A+1
+        if(B==0):
+            B=B+1
+        Z=(P*A)+(Q*B)
+        return Z,A,B
+    elif(prob % 3 == 1):
+        A=A+1 % p
+        if(A==0):
+            A=A+1
+        Z=(P*A)+(Q*B)
+        return Z,A,B
+    else :
+        B=B+1 % p
+        if(B==0):
+            B=B+1
+        Z=(P*A)+(Q*B)
+        return Z,A,B
+    
+  
 
-
-x,y,z=random_elliptique(23)  
-crouve=EllipticCurve(y,z,23)  
+def rho_man(P,Q,p):
+    ordre=order(P,p)
+    Ai=random.randint(1,ordre-1)
+    Bi=random.randint(1,ordre-1)
+    Zi=(P*Ai)+(Q*Bi)
+    Zbis=Zi
+    Aibis=Ai
+    Bibis=Bi
+    i=0
+    while(True):
+        Zi,Ai,Bi=rho_probability(P,Ai,Bi,Q,ordre)
+        Zibis,Aibis,Bibis=rho_probability(P,Aibis,Bibis,Q,ordre)
+        Zibis,Aibis,Bibis=rho_probability(P,Aibis,Bibis,Q,ordre)
+        print('Zi,ZIBIS,Ai,Bi,Aibis,Bibis')
+        print(Zi,Zibis,Ai,Bi,Aibis,Bibis)
+        print(i)
+        i=i+1
+        if((Bi % ordre) != (Bibis % ordre)):
+            if(Zi==Zibis) :
+                break
+    return ((Ai-Aibis) *mod_inverse(-( Bi-Bibis),ordre)) % ordre 
+        
+        
+    
+x,y,z=random_elliptique(79)  
+crouve=EllipticCurve(y,z,79)  
 print('seedE value')
 print(x)
 print(crouve)
-print(verfy_curve(23,x,y,z))
+print(verfy_curve(79,x,y,z))
     
-sed,ye,point=random_point(1,1,23)
+sed,ye,point=random_point(y,z,79)
 print('on a generer ce point man')
 print(point.__getitem__(0))
 print(point.__getitem__(1))
+ordre=order(point,79)
+print(ordre)
+g=Point(point.curve,7,52)
+print(g)
+i=1
+while(i<78):
+    print (i)
+    tic = time.perf_counter()
+    print(point.__mul__(i))
+    toc = time.perf_counter()
+    print(f"normale {toc - tic:0.4f} seconds")
+    i=i+1
+    
+print(point*70)    
+    
 
-print(verify_point(1,1,23,sed,ye,point,order(point,23)))
 
+print(verify_point(y,z,79,sed,ye,point,order(point,79)))
+print(point.curve)
 
+print(rho_man(point,g,79))
+
+ordre=order(point,79)
+print(ordre)
+
+    
+
+for i in range(1,100):
+    print(point*i)
+    print(i)
+    print('\n')
+  tic = time.perf_counter()
+
+    toc = time.perf_counter()
+    
