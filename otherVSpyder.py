@@ -181,4 +181,452 @@ def mod_inverse(a, n):
 
 
 def random_elliptiqueV2(p):
-    #while we
+    #while we didnt find a curve
+    log2 = math.log(p, 2.0)
+    t=math.ceil(log2)
+    s=math.floor((t-1)/160)
+    h=t-(160*s)
+    while(True):
+        m=hashlib.sha1()
+        seed=secrets.token_bytes(20) #arbitary bit string of 160bits
+        m.update(seed)
+        hash1=m.digest() #sha1 of seedE
+        c0=hash1[0:h] #the h rightmost bit of hash1
+        w0=zero_octet_pod_fort(c0) # c0 with the leftmost bit to 0
+        W=[]
+        W.append(w0)
+        #Forming the w it's the concatenation of the Wi 
+        #with Wi=sha1((seed+1)mod 2^160)
+        for i in range (1,s+1):
+            m=hashlib.sha1()
+            seedE=((seed+i )%( 2 **160))
+            m.update(seedE)
+            hash2=m.digest()
+            W.append(hash2)
+        Wbis=concatenation(W)
+        r=0
+        #c
+        for i in range(1,t+1):
+            r=r+(Wbis[len(Wbis)-i]*(2**(t-i)))
+        a=1
+        rinv=mod_inverse(r,p)
+        if(solution(rinv,p)==False):
+            continue
+        while(True):
+            b=random.randint(0,p-1)
+            if(((r*(b**2)) % p) == ((a**3) %p)):
+                break
+        #if we pass this test it mean we have a good curve        
+        if((4* (a**3))+(27*(b**2)) % p != 0):
+            break
+    
+    return seed,a,b
+
+def random_elliptiqueV1(p):
+    #while we didnt find a curve
+    while(True):
+        m=hashlib.sha1()
+        seed=secrets.token_bytes(20) #arbitary bit string of 160bits
+        m.update(seed)
+        hash1=m.digest() #sha1 of seedE
+        log2 = math.log(p, 2.0)
+        t=math.ceil(log2)
+        s=math.floor((t-1)/160)
+        h=t-(160*s)
+        c0=hash1[0:h] #the h rightmost bit of hash1
+        w0=zero_octet_pod_fort(c0) # c0 with the leftmost bit to 0
+        W=[]
+        W.append(w0)
+        #Forming the w it's the concatenation of the Wi 
+        #with Wi=sha1((seed+1)mod 2^160)
+        for i in range (1,s+1):
+            m=hashlib.sha1()
+            seedE=((seed+i )%( 2 **160))
+            m.update(seedE)
+            hash2=m.digest()
+            W.append(hash2)
+        Wbis=concatenation(W)
+        r=0
+        #c
+        for i in range(1,t+1):
+            r=r+(Wbis[len(Wbis)-i]*(2**(t-i)))
+        while(True):
+            a=random.randint(0,p-1)
+            b=random.randint(0,p-1)
+            if(((r*(b**2)) % p) == ((a**3) %p)):
+                break
+        #if we pass this test it mean we have a good curve        
+        if((4* (a**3))+(27*(b**2)) % p != 0):
+            break
+    
+    return seed,a,b
+
+
+def random_elliptiqueV3(p):
+    #while we didnt find a curve
+    while(True):
+        m=hashlib.sha1()
+        seed=secrets.token_bytes(20) #arbitary bit string of 160bits
+        m.update(seed)
+        hash1=m.digest() #sha1 of seedE
+        log2 = math.log(p, 2.0)
+        t=math.ceil(log2)
+        s=math.floor((t-1)/160)
+        h=t-(160*s)
+        c0=hash1[0:h] #the h rightmost bit of hash1
+        w0=zero_octet_pod_fort(c0) # c0 with the leftmost bit to 0
+        W=[]
+        W.append(w0)
+        #Forming the w it's the concatenation of the Wi 
+        #with Wi=sha1((seed+1)mod 2^160)
+        for i in range (1,s+1):
+            m=hashlib.sha1()
+            seedE=((seed+i )%( 2 **160))
+            m.update(seedE)
+            hash2=m.digest()
+            W.append(hash2)
+        Wbis=concatenation(W)
+        r=0
+        #c
+        for i in range(1,t+1):
+            r=r+(Wbis[len(Wbis)-i]*(2**(t-i)))
+
+        a=1
+        b=1
+        if(((r*(b**2)) % p) != ((a**3) %p)):
+            continue
+        #if we pass this test it mean we have a good curve        
+        if((4* (a**3))+(27*(b**2)) % p != 0):
+            break
+    
+    return seed,a,b
+
+
+def verfy_curve(p,seed,a,b):
+    """
+    Fonction return true if we generate a good curve or not
+    
+    """
+    m=hashlib.sha1()
+    m.update(seed)
+    hash1=m.digest()
+    log2 = math.log(p, 2.0)
+    t=math.ceil(log2)
+    s=math.floor((t-1)/160)
+    h=t-(160*s)
+    c0=hash1[0:h]
+    w0=zero_octet_pod_fort(c0)
+    W=[]
+    W.append(w0)
+    for i in range (1,s+1):
+        m=hashlib.sha1()
+        seedE=((seed+i )%( 2 **160))
+        m.update(seedE)
+        hash2=m.digest()
+        W.append(hash2)
+    Wbis=concatenation(W)
+    r=0
+    for i in range(1,t+1):
+        r=r+(Wbis[len(Wbis)-i]*(2**(t-i)))
+    if(((r*(b**2)) % p) == ((a**3) %p)):
+        return True
+    else : 
+        return False
+
+
+
+def random_point(a,seedE,b,p):
+    while(True):
+        m=hashlib.sha1()
+        seedp=secrets.token_bytes(20)
+        m.update(seedp)
+        hash1=m.digest()
+        log2 = math.log(p, 2.0)
+        t=math.ceil(log2)
+        s=math.floor((t-1)/160)
+        h=t-(160*s)
+        print(h)
+        c0=hash1[0:h]
+        x0=zero_octet_pod_fort(c0)
+        X=[]
+        X.append(x0)
+        for i in range (1,s+1):
+            m=hashlib.sha1()
+            seed=((seedE+i )%( 2 **160))
+            m.update(seed)
+            hash2=m.digest()
+            X.append(hash2)
+        Xbis=concatenation(X)
+        xu=int.from_bytes(Xbis,"little")
+        temp=((xu**3)+(a*xu)+b)%p
+        if(solution(temp,p)==True):
+            break
+    for i in range(p):
+        if((i**2)%p == temp):
+            break
+        if(i == p-1):
+            print('  Error !!!  ')
+    yu=i
+    u=Point(EllipticCurve(a,b,p),xu,yu)   
+    P=u*h
+    return seedp,yu,P  
+
+def verify_point(a,b,p,seed,yu,P,ordreP):
+    m=hashlib.sha1()
+    m.update(seed)
+    hash1=m.digest()
+    log2 = math.log(p, 2.0)
+    t=math.ceil(log2)
+    s=math.floor((t-1)/160)
+    h=t-(160*s)
+    c0=hash1[0:h]
+    x0=zero_octet_pod_fort(c0)
+    X=[]
+    X.append(x0)
+    for i in range (1,s+1):
+        m=hashlib.sha1()
+        seedP=((seed+i )%( 2 **160))
+        m.update(seedP)
+        hash2=m.digest()
+        X.append(hash2)
+    Xbis=concatenation(X)
+    xu=int.from_bytes(Xbis,"little")
+    temp=((xu**3)+(a*xu)+b)%p    
+    if(((yu**2) % p) != temp):
+        return False
+    u=Point(EllipticCurve(a,b,p),xu,yu) 
+    Pprime=u*h
+    if((P!=Pprime) or( not isinstance(P*ordreP,Inf))):
+        return False
+    return True
+
+
+#methode take b and transform it with the leftmost bit to 0
+def zero_octet_pod_fort(b):
+    a=b'\x00'
+    l=[]
+    for i in range(len(b)):
+        if i==len(b)-1:
+            l.append(a[0] &b[i])
+        else:
+            l.append(b[i])
+    return bytes(l)
+
+def concatenation(l):
+    w=[]
+    for wi in l : 
+        for i in range(len(wi)):
+            w.append(wi[i])
+    return bytes(w)
+
+
+#verify if n is a power in Fp 
+def solution(n,p):
+    if((n**((p-1)/2))%p==1):
+        return True
+    else :
+        return False
+
+
+#order of a Point P in Fp
+def order(P,p):
+    if(isinstance(P,Inf)):
+        return 1
+    else :
+        i=2
+    while(True):
+        h=P*i
+        print(h)
+        if(isinstance(h,Inf)):
+            return i
+        i=i+1
+        
+
+def rho_probability(P,A,B,Q,p):
+    prob=random.randint(1,9999)%3
+    if(prob %3 == 0):
+        A=2*A % p
+        B=2*B % p
+        if(A==0):
+            A=A+1
+        if(B==0):
+            B=B+1
+        Z=(P*A)+(Q*B)
+        return Z,A,B
+    elif(prob % 3 == 1):
+        A=A+1 % p
+        if(A==0):
+            A=A+1
+        Z=(P*A)+(Q*B)
+        return Z,A,B
+    else :
+        B=B+1 % p
+        if(B==0):
+            B=B+1
+        Z=(P*A)+(Q*B)
+        return Z,A,B
+    
+  
+
+def rho_man(P,Q,p):
+    ordre=order(P,p)
+    Ai=random.randint(1,ordre-1)
+    Bi=random.randint(1,ordre-1)
+    Zi=(P*Ai)+(Q*Bi)
+    Zibis=Zi
+    Aibis=Ai
+    Bibis=Bi
+    i=0
+    while(True):
+        Zi,Ai,Bi=rho_probability(P,Ai,Bi,Q,ordre)
+        Zibis,Aibis,Bibis=rho_probability(P,Aibis,Bibis,Q,ordre)
+        Zibis,Aibis,Bibis=rho_probability(P,Aibis,Bibis,Q,ordre)
+        print('Zi,ZIBIS,Ai,Bi,Aibis,Bibis')
+        print(Zi,Zibis,Ai,Bi,Aibis,Bibis)
+        print(i)
+        i=i+1
+        if((Bi % ordre) != (Bibis % ordre)):
+            if(Zi==Zibis) :
+                break
+    return ((Ai-Aibis) *mod_inverse(-( Bi-Bibis),ordre)) % ordre 
+
+
+
+def order_curve(a,b,p):
+    i=1
+    for j in range(p):
+        for k in range( p):
+            if((k**2) % p==((j**3 )+ (a*j) + b)%p):
+                i=i+1
+                print(j,k)
+    return i
+                
+        
+
+                
+            
+      
+        
+#test sur y^2=x^3+x+1    
+x,y,z=random_elliptiqueV3(23)  
+crouve=EllipticCurve(y,z,23)  
+print('seedE value')
+print(x)
+print(crouve)
+print(verfy_curve(23,x,y,z))
+
+
+print(order_curve(y,z,23))
+
+liste=[]
+sed,yu,point1=random_point(y,x,z,23)
+liste.append(point1)
+sed,yu,point2=random_point(y,x,z,23)
+liste.append(point2)
+sed,yu,point3=random_point(y,x,z,23)
+liste.append(point3)
+sed,yu,point4=random_point(y,x,z,23)
+liste.append(point4)
+sed,yu,point5=random_point(y,x,z,23)
+liste.append(point5)
+sed,yu,point6=random_point(y,x,z,23)
+liste.append(point6)
+sed,yu,point7=random_point(y,x,z,23)
+liste.append(point7)
+sed,yu,point8=random_point(y,x,z,23)
+liste.append(point8)
+sed,yu,point9=random_point(y,x,z,23)
+liste.append(point9)
+sed,yu,point10=random_point(y,x,z,23)
+liste.append(point10)
+
+for j in range(len(liste)):
+    print(liste[j])
+    
+    print(order(liste[j],23))
+    
+
+
+#test sur une courbe aléatoire   
+x,y,z=random_elliptiqueV1(79)  
+crouve=EllipticCurve(y,z,79)  
+print('seedE value')
+print(x)
+print(crouve)
+print(verfy_curve(79,x,y,z))
+
+
+
+
+liste=[]
+sed,yu,point1=random_point(y,x,z,79)
+liste.append(point1)
+sed,yu,point2=random_point(y,x,z,79)
+liste.append(point2)
+sed,yu,point3=random_point(y,x,z,79)
+liste.append(point3)
+sed,yu,point4=random_point(y,x,z,79)
+liste.append(point4)
+sed,yu,point5=random_point(y,x,z,79)
+liste.append(point5)
+sed,yu,point6=random_point(y,x,z,79)
+liste.append(point6)
+sed,yu,point7=random_point(y,x,z,79)
+liste.append(point7)
+sed,yu,point8=random_point(y,x,z,79)
+liste.append(point8)
+sed,yu,point9=random_point(y,x,z,79)
+liste.append(point9)
+sed,yu,point10=random_point(y,x,z,79)
+liste.append(point10)
+
+for j in range(len(liste)):
+    print(liste[j])
+    print(order(liste[j],79))
+print(order_curve(y,z,79))
+print(order(point4,79))
+
+print('on a generer ce point man')
+print(point.__getitem__(0))
+print(point.__getitem__(1))
+ordre=order(point,79)
+print(ordre)
+g=Point(point.curve,7,52)
+print(g)
+i=1
+while(i<78):
+    print (i)
+    tic = time.perf_counter()
+    print(point.__mul__(i))
+    toc = time.perf_counter()
+    print(f"normale {toc - tic:0.4f} seconds")
+    i=i+1
+    
+print(point*70)    
+    
+
+
+print(verify_point(y,z,79,sed,ye,point,order(point,79)))
+print(point.curve)
+
+print(rho_man(point,g,79))
+
+ordre=order(point,79)
+print(ordre)
+
+    
+
+for i in range(1,100):
+    print(point*i)
+    print(i)
+    print('\n')
+    tic = time.perf_counter()
+
+toc = time.perf_counter()
+    
+    
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()    
+    
+    
